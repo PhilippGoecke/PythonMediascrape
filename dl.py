@@ -6,7 +6,7 @@ from tld import get_tld # apt install python3-tld
 import hashlib
 scraped_urls = set()
 import sys
-print(sys.getrecursionlimit())
+print(f"Recursion Limit: {sys.getrecursionlimit()}")
 
 def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies):
     if current_depth >= max_depth:
@@ -33,7 +33,14 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     download_videos(soup, url, output_dir, headers, proxies, verify_tls)
 
     # Find all links and recurse
-    for link in soup.find_all('a'):
+    links = soup.find_all('a')
+
+    if len(links) == 0:
+        print(f"    scrape found no links!")
+    else:
+        print(f"    found {len(links)} links")
+
+    for link in links:
         href = link.get('href')
         if href:
             if href.startswith('#'):
@@ -41,6 +48,9 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
                 continue
             if 'javascript:' in href:
                 #print(f"DEBUG skip javascript href: '{href}'")
+                continue
+            if 'data:' in href:
+                print(f"DEBUG skip data href: '{href}'")
                 continue
             if href == '':
                 #print(f"DEBUG skip empty href: '{href}'")
@@ -59,10 +69,10 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
                 if url_whitelist and type(url_whitelist) == type([]):
                     # Check if any keyword is in the resolved URL
                     if any(keyword in resolved_url for keyword in url_whitelist):
-                        print(f"Found link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
+                        print(f"  Found link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
                         recursiv_download(session, resolved_url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth + 1, max_depth, cookies)
                     else:
-                        print(f"    Skipping link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
+                        print(f"    Skipping non-whitelist link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
                         continue
                 else:
                     print(f"Whitelist Error! {url_whitelist}")
@@ -89,7 +99,10 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls):
             continue
         print(f"    Downloading image: {img_url} -> {filename}")
         with open(img_path, 'wb') as f:
-            f.write(requests.get(img_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+            if img_path.startswith('data:'):
+                f.write(img_path)
+            else:
+                f.write(requests.get(img_url, headers=headers, proxies=proxies, verify=verify_tls).content)
 
 def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
     # Find all video tags
@@ -142,6 +155,7 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
     if url_whitelist and type(url_whitelist) == type([]):
         if domain not in url_whitelist:
             url_whitelist.append(domain)
+        print(f"Whitelist: {url_whitelist}")
     else:
         print(f"Whitelist reset of {url_whitelist}")
         url_whitelist = [domain]
@@ -153,6 +167,8 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
     #sys.setrecursionlimit(1500)
 
     recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies)
+
+    print(f"Scraped {len(scraped_urls)} Pages")
 
 #if __name__ == '__main__':
 #    target_url = input("Enter the URL to scrape: ")
