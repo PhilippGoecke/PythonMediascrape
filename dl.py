@@ -99,8 +99,10 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls):
             continue
         print(f"    Downloading image: {img_url} -> {filename}")
         with open(img_path, 'wb') as f:
-            if img_path.startswith('data:'):
-                f.write(img_path)
+            if img_url.startswith('data:'):
+                # Handle base64 encoded image data
+                header, encoded = img_url.split(',', 1)
+                f.write(base64.b64decode(encoded))
             else:
                 f.write(requests.get(img_url, headers=headers, proxies=proxies, verify=verify_tls).content)
 
@@ -123,7 +125,12 @@ def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
             continue
         print(f"    Downloading video: {video_url} -> {filename}")
         with open(video_path, 'wb') as f:
-            f.write(requests.get(video_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+            if video_path.startswith('data:'):
+                # Handle base64 encoded video data
+                header, encoded = video_path.split(',', 1)
+                f.write(base64.b64decode(encoded))
+            else:
+                f.write(requests.get(video_url, headers=headers, proxies=proxies, verify=verify_tls).content)
 
 def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None):
     # Create Download Folder
