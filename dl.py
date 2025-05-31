@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup # apt install python3-bs4
 from urllib.parse import urljoin
 from tld import get_tld # apt install python3-tld
 import hashlib
+import base64
 scraped_urls = set()
 import sys
 print(f"Recursion Limit: {sys.getrecursionlimit()}")
