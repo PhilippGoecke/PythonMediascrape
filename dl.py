@@ -93,7 +93,8 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls):
         # Extract filename from original URL
         filename_parts = img_url.split('/')
         url_hash = hashlib.sha1(img_url.encode('utf-8')).hexdigest()
-        filename = f'img_{filename_parts[-1].split(".")[0]}_{url_hash}.{file_ext}'
+        base_name = filename_parts[-1].split(".")[0][:42]
+        filename = f'img_{base_name}_{url_hash}.{file_ext}'
         img_path = os.path.join(output_dir, filename)
         if os.path.exists(img_path):
             print(f"  File {filename} already exists, skipping...")
@@ -119,7 +120,8 @@ def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
         # Extract filename from original URL
         filename_parts = video_url.split('/')
         url_hash = hashlib.sha1(video_url.encode('utf-8')).hexdigest()
-        filename = f'vid_{filename_parts[-1].split(".")[0]}_{url_hash}.{file_ext}'
+        base_name = filename_parts[-1].split(".")[0][:42]
+        filename = f'vid_{base_name}_{url_hash}.{file_ext}'
         video_path = os.path.join(output_dir, filename)
         if os.path.exists(video_path):
             print(f"  File {filename} already exists, skipping...")
