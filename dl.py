@@ -1,20 +1,56 @@
 import os
-import requests # apt install python3-requests python3-socks
-from bs4 import BeautifulSoup # apt install python3-bs4
+import requests
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from tld import get_tld # apt install python3-tld
+from tld import get_tld
 import hashlib
 import base64
 scraped_urls = set()
 import sys
 print(f"Recursion Limit: {sys.getrecursionlimit()}")
+import subprocess
+import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies):
     if current_depth >= max_depth:
         print(f"Reached maximum recursion depth of {max_depth}, stopping.")
         return
 
-    response = session.get(url, headers=headers, proxies=proxies, verify=verify_tls)
+    try:
+        response = session.get(url, headers=headers, proxies=proxies, verify=verify_tls)
+        #print(f"  Response encoding {response.encoding} apparent_encoding {response.apparent_encoding}")
+        print(f"  Response Content Encoding '{response.headers.get('Content-Encoding')}'")
+
+        if "cf-chl-bypass" in response.text or "Checking your browser" in response.text or "chk-hdr" in response.text:
+            print(f"  Cloudflare challenge detected. Attempting to bypass...")
+
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            if proxies and 'http' in proxies:
+                chrome_options.add_argument(f"--proxy-server={proxies['http']}")
+
+            chromium_version = re.search(r'(\d+\.\d+\.\d+\.\d+)', subprocess.run(['chromium', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True).stdout).group(1)
+            print(f"    Chromium Version {chromium_version}")
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager(driver_version=chromium_version).install()), options=chrome_options)
+            print(f"    ChromeDriver Version {driver.capabilities.get('chrome', {}).get('chromedriverVersion', 'Unknown')}")
+            driver.get(url)
+            print("  Waiting for Cloudflare challenge to complete...")
+            #input("Press Enter to continue ...")
+            driver.implicitly_wait(30)
+            response_text = driver.page_source
+            driver.quit()
+
+            response = type('Response', (object,), {'text': response_text, 'content': response_text.encode('utf-8'), 'cookies': session.cookies})
+    except Exception as e:
+        print(f"Error during request: {e}")
+        return
     print(f"Response {response}")
 
     url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()
@@ -22,7 +58,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     html_path = os.path.join(output_dir, filename)
     print(f"  Saving html: {url} -> {filename}")
     with open(html_path, 'wb') as f:
-        f.write(response.content)
+        f.write(response.text.encode('utf-8'))
 
     cookies = response.cookies
     print("  Cookies: {}".format(cookies))
@@ -145,18 +181,19 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
     # Header
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        #'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
+        #'Accept-Encoding': 'gzip, deflate, br',
+        #'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Encoding': 'gzip',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1'
     }
 
     # Proxy
-    # apt install tor
     proxies = dict(http='socks5://127.0.0.1:9050',
                    https='socks5://127.0.0.1:9050')
-    #proxies = ''
 
     tld_res = get_tld(url, as_object=True)
     domain = ".".join([tld_res.domain, tld_res.tld])
