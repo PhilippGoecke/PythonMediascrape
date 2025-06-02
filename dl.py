@@ -56,9 +56,26 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()
     filename = f'page_{url_hash}.html'
     html_path = os.path.join(output_dir, filename)
-    print(f"  Saving html: {url} -> {filename}")
-    with open(html_path, 'wb') as f:
-        f.write(response.text.encode('utf-8'))
+    content_type = response.headers.get('Content-Type', '')
+    if 'text/html' in content_type:
+        print(f"  Saving html: {url} -> {filename}")
+        with open(html_path, 'wb') as f:
+            f.write(response_text.encode('utf-8'))
+    else:
+        # Save non-HTML content with appropriate extension
+        ext = ''
+        if 'application/pdf' in content_type:
+            ext = '.pdf'
+        elif 'image/' in content_type:
+            ext = '.' + content_type.split('/')[1].split(';')[0]
+        elif 'application/json' in content_type:
+            ext = '.json'
+        else:
+            ext = '.bin'
+        non_html_path = os.path.join(output_dir, f'file_{url_hash}{ext}')
+        print(f"  Saving non-HTML content: {url} -> {non_html_path}")
+        with open(non_html_path, 'wb') as f:
+            f.write(response.content)
 
     cookies = response.cookies
     print("  Cookies: {}".format(cookies))
