@@ -47,16 +47,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
             response_text = driver.page_source
             driver.quit()
 
-            response = type(
-                'Response',
-                (object,),
-                {
-                    'text': response_text,
-                    'content': response_text.encode('utf-8'),
-                    'cookies': session.cookies,
-                    'headers': response.headers
-                }
-            )
+            response = type('Response', (object,), {'text': response_text, 'content': response_text.encode('utf-8'), 'cookies': session.cookies})
     except Exception as e:
         print(f"Error during request: {e}")
         return
@@ -65,7 +56,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     url_hash = hashlib.sha1(url.encode('utf-8')).hexdigest()
     filename = f'page_{url_hash}.html'
     html_path = os.path.join(output_dir, filename)
-    content_type = response.headers.get('Content-Type', '')
+    content_type = response.headers.get('Content-Type', '') if hasattr(response, 'headers') and response.headers else ''
     if 'text/html' in content_type:
         print(f"  Saving html: {url} -> {filename}")
         with open(html_path, 'wb') as f:
