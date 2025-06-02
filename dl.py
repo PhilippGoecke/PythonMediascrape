@@ -47,7 +47,16 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
             response_text = driver.page_source
             driver.quit()
 
-            response = type('Response', (object,), {'text': response_text, 'content': response_text.encode('utf-8'), 'cookies': session.cookies})
+            response = type(
+                'Response',
+                (object,),
+                {
+                    'text': response_text,
+                    'content': response_text.encode('utf-8'),
+                    'cookies': session.cookies,
+                    'headers': response.headers
+                }
+            )
     except Exception as e:
         print(f"Error during request: {e}")
         return
