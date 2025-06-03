@@ -60,7 +60,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     if 'text/html' in content_type:
         print(f"  Saving html: {url} -> {filename}")
         with open(html_path, 'wb') as f:
-            f.write(response_text.encode('utf-8'))
+            f.write(response.text.encode('utf-8'))
     else:
         # Save non-HTML content with appropriate extension
         ext = ''
