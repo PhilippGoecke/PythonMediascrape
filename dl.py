@@ -10,6 +10,7 @@ import sys
 print(f"Recursion Limit: {sys.getrecursionlimit()}")
 import subprocess
 import re
+import tempfile
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -33,6 +34,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument(f"--user-data-dir={tempfile.mkdtemp(prefix='chrome_user_data_')}")
             if proxies and 'http' in proxies:
                 chrome_options.add_argument(f"--proxy-server={proxies['http']}")
 
