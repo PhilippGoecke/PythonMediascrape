@@ -82,7 +82,13 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     cookies = response.cookies
     print("  Cookies: {}".format(cookies))
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+    # Only parse with BeautifulSoup if content type is HTML
+    soup = None
+    if 'text/html' in content_type:
+        soup = BeautifulSoup(response.text, 'html.parser')
+    else:
+        print("  Skipping BeautifulSoup parsing: content is not HTML.")
+        return
 
     download_images(soup, url, output_dir, headers, proxies, verify_tls)
 
