@@ -6,4 +6,4 @@ download_folder = 'download_nzz'
 
 base_site = 'https://www.nzz.ch/'
 
-download_media(base_site, output_dir=download_folder, url_whitelist=whitelist, verify_tls=True, max_depth=1)
+download_media(base_site, output_dir=download_folder, url_whitelist=whitelist, verify_tls=True, max_depth=1, headless=True)
