@@ -60,7 +60,20 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
     filename = f'page_{url_hash}.html'
     html_path = os.path.join(output_dir, filename)
     content_type = response.headers.get('Content-Type', '') if hasattr(response, 'headers') and response.headers else ''
+    # Try to determine if content is HTML or contains HTML tags, even if Content-Type is not set correctly
+    is_html = False
     if 'text/html' in content_type:
+        is_html = True
+    else:
+        # Heuristic: check if response.text contains <html or <!DOCTYPE html
+        try:
+            text_sample = response.text[:2048].lower()
+            if '<html' in text_sample or '<!doctype html' in text_sample:
+                is_html = True
+        except Exception:
+            pass
+
+    if is_html:
         print(f"  Saving html: {url} -> {filename}")
         with open(html_path, 'wb') as f:
             f.write(response.text.encode('utf-8'))
