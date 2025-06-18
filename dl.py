@@ -177,7 +177,10 @@ def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
         else:
             video_url = urljoin(url, video.get('src')) or urljoin(url, video.get('poster'))
 
-        file_ext = os.path.splitext(video_url)[1][1:]
+        if "?" in str(os.path.splitext(video_url)[1][1:]):
+            file_ext = str(os.path.splitext(video_url)[1][1:])[:str(os.path.splitext(video_url)[1][1:]).index('?')]
+        else:
+            file_ext = os.path.splitext(video_url)[1][1:]
         # Extract filename from original URL
         filename_parts = video_url.split('/')
         url_hash = hashlib.sha1(video_url.encode('utf-8')).hexdigest()
