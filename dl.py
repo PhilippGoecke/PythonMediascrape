@@ -163,6 +163,8 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
         file_ext = str(os.path.splitext(media_url)[1][1:])[:str(os.path.splitext(media_url)[1][1:]).index('?')]
     else:
         file_ext = os.path.splitext(media_url)[1][1:]
+        if not file_ext:
+            file_ext = 'dat'
 
     # Extract filename from original URL
     filename_parts = media_url.split('/')
@@ -254,5 +256,6 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
 
 #if __name__ == '__main__':
 #    target_url = input("Enter the URL to scrape: ")
-#    url_whitelist = input("Enter URL url_whitelist to filter by (optional): ")
+#    url_whitelist_input = input("Enter URL whitelist to filter by (comma-separated, optional): ")
+#    url_whitelist = [item.strip() for item in url_whitelist_input.split(',')] if url_whitelist_input else None
 #    download_media(target_url, url_whitelist=url_whitelist, verify_tls=True, max_depth=2)
