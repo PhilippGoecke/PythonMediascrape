@@ -176,6 +176,7 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
         print(f"  File {filename} already exists, skipping...")
         return
     print(f"    Downloading {prefix}: {media_url} -> {filename}")
+
     # Download the media file
     with open(file_path, 'wb') as f:
         if media_url.startswith('data:'):
