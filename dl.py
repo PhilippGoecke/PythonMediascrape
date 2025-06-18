@@ -16,7 +16,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies):
+def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless=True):
     if current_depth >= max_depth:
         print(f"Reached maximum recursion depth of {max_depth}, stopping.")
         return
@@ -30,7 +30,8 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
             print(f"  Cloudflare challenge detected. Attempting to bypass...")
 
             chrome_options = Options()
-            chrome_options.add_argument("--headless")
+            if headless:
+                chrome_options.add_argument("--headless")
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--no-sandbox")
             chrome_options.add_argument("--disable-dev-shm-usage")
@@ -132,7 +133,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
                     # Check if any keyword is in the resolved URL
                     if any(keyword in resolved_url for keyword in url_whitelist):
                         print(f"  Found link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
-                        recursiv_download(session, resolved_url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth + 1, max_depth, cookies)
+                        recursiv_download(session, resolved_url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth + 1, max_depth, cookies, headless)
                     else:
                         print(f"    Skipping non-whitelist link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
                         continue
@@ -199,7 +200,7 @@ def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
             else:
                 f.write(requests.get(video_url, headers=headers, proxies=proxies, verify=verify_tls).content)
 
-def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None):
+def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None, headless=True):
     # Create Download Folder
     os.makedirs(output_dir, exist_ok=True)
 
@@ -241,7 +242,7 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
 
     #sys.setrecursionlimit(1500)
 
-    recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies)
+    recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless)
 
     print(f"Scraped {len(scraped_urls)} Pages")
 
