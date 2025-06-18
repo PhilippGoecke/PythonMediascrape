@@ -23,7 +23,6 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
 
     try:
         response = session.get(url, headers=headers, proxies=proxies, verify=verify_tls)
-        #print(f"  Response encoding {response.encoding} apparent_encoding {response.apparent_encoding}")
         print(f"  Response Content Encoding '{response.headers.get('Content-Encoding')}'")
 
         if "cf-chl-bypass" in response.text or "Checking your browser" in response.text or "chk-hdr" in response.text:
@@ -237,8 +236,8 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
 
     print(f"Domain: {domain}")
     if url_whitelist and type(url_whitelist) == type([]):
-        if domain not in url_whitelist:
-            url_whitelist.append(domain)
+        #if domain not in url_whitelist:
+        #    url_whitelist.append(domain)
         print(f"Whitelist: {url_whitelist}")
     else:
         print(f"Whitelist reset of {url_whitelist}")
