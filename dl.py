@@ -144,61 +144,53 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
         #else:
         #    print(f"DEBUG link with no href: {link}")
 
+def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_tls):
+    # Determine file extension
+    if "?" in str(os.path.splitext(media_url)[1][1:]):
+        file_ext = str(os.path.splitext(media_url)[1][1:])[:str(os.path.splitext(media_url)[1][1:]).index('?')]
+    else:
+        file_ext = os.path.splitext(media_url)[1][1:]
+
+    # Extract filename from original URL
+    filename_parts = media_url.split('/')
+    url_hash = hashlib.sha1(media_url.encode('utf-8')).hexdigest()
+    base_name = filename_parts[-1].split(".")[0][:42]
+    filename = f'{prefix}_{base_name}_{url_hash}.{file_ext}'
+    file_path = os.path.join(output_dir, filename)
+
+    # Check if file already exists
+    if os.path.exists(file_path):
+        print(f"  File {filename} already exists, skipping...")
+        return
+    print(f"    Downloading {prefix}: {media_url} -> {filename}")
+    # Download the media file
+    with open(file_path, 'wb') as f:
+        if media_url.startswith('data:'):
+            # Handle base64 encoded data
+            header, encoded = media_url.split(',', 1)
+            f.write(base64.b64decode(encoded))
+        else:
+            f.write(requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+
 def download_images(soup, url, output_dir, headers, proxies, verify_tls):
     # Find all image tags
     for img in soup.find_all('img'):
-        img_url = urljoin(url, img.get('src'))
-        if "?" in str(os.path.splitext(img_url)[1][1:]):
-            file_ext = str(os.path.splitext(img_url)[1][1:])[:str(os.path.splitext(img_url)[1][1:]).index('?')]
-        else:
-            file_ext = os.path.splitext(img_url)[1][1:]
-        # Extract filename from original URL
-        filename_parts = img_url.split('/')
-        url_hash = hashlib.sha1(img_url.encode('utf-8')).hexdigest()
-        base_name = filename_parts[-1].split(".")[0][:42]
-        filename = f'img_{base_name}_{url_hash}.{file_ext}'
-        img_path = os.path.join(output_dir, filename)
-        if os.path.exists(img_path):
-            print(f"  File {filename} already exists, skipping...")
+        img_src = img.get('src')
+        if not img_src:
             continue
-        print(f"    Downloading image: {img_url} -> {filename}")
-        with open(img_path, 'wb') as f:
-            if img_url.startswith('data:'):
-                # Handle base64 encoded image data
-                header, encoded = img_url.split(',', 1)
-                f.write(base64.b64decode(encoded))
-            else:
-                f.write(requests.get(img_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+        img_url = urljoin(url, img_src)
+        download_media_file(img_url, output_dir, 'img', headers, proxies, verify_tls)
 
 def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
-    # Find all video tags
+    # Find all video and source tags
     for video in soup.find_all(['video', 'source']):
-        if video.name == 'source':
-            video_url = urljoin(url, video.get('src'))
-        else:
-            video_url = urljoin(url, video.get('src')) or urljoin(url, video.get('poster'))
-
-        if "?" in str(os.path.splitext(video_url)[1][1:]):
-            file_ext = str(os.path.splitext(video_url)[1][1:])[:str(os.path.splitext(video_url)[1][1:]).index('?')]
-        else:
-            file_ext = os.path.splitext(video_url)[1][1:]
-        # Extract filename from original URL
-        filename_parts = video_url.split('/')
-        url_hash = hashlib.sha1(video_url.encode('utf-8')).hexdigest()
-        base_name = filename_parts[-1].split(".")[0][:42]
-        filename = f'vid_{base_name}_{url_hash}.{file_ext}'
-        video_path = os.path.join(output_dir, filename)
-        if os.path.exists(video_path):
-            print(f"  File {filename} already exists, skipping...")
+        video_src = video.get('src')
+        if not video_src and video.name == 'video':
+            video_src = video.get('poster')
+        if not video_src:
             continue
-        print(f"    Downloading video: {video_url} -> {filename}")
-        with open(video_path, 'wb') as f:
-            if video_path.startswith('data:'):
-                # Handle base64 encoded video data
-                header, encoded = video_path.split(',', 1)
-                f.write(base64.b64decode(encoded))
-            else:
-                f.write(requests.get(video_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+        video_url = urljoin(url, video_src)
+        download_media_file(video_url, output_dir, 'vid', headers, proxies, verify_tls)
 
 def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None, headless=True):
     # Create Download Folder
