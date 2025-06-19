@@ -97,7 +97,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
 
     # Only parse with BeautifulSoup if content type is HTML
     soup = None
-    if 'text/html' in content_type or content_type == '':
+    if is_html or content_type == '':
         soup = BeautifulSoup(response.text, 'html.parser')
     else:
         print("  Skipping BeautifulSoup parsing: content is not HTML.")
