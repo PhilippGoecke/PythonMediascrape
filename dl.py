@@ -25,7 +25,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
         response = session.get(url, headers=headers, proxies=proxies, verify=verify_tls)
         print(f"  Response Content Encoding '{response.headers.get('Content-Encoding')}'")
 
-        if "cf-chl-bypass" in response.text or "Checking your browser" in response.text or "chk-hdr" in response.text:
+        if "cf-chl-bypass" in response.text or "Checking your browser" in response.text or "chk-hdr" in response.text or "challenge-error-text" in response.text:
             print(f"  Cloudflare challenge detected. Attempting to bypass...")
 
             chrome_options = Options()
