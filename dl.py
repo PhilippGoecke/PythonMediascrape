@@ -16,6 +16,14 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
+from stem import Signal
+from stem.control import Controller
+
+def switchIP():
+    with Controller.from_port(port=9051) as controller:
+        controller.authenticate()
+        controller.signal(Signal.NEWNYM)
+
 def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless=True, extra_match=None):
     if current_depth >= max_depth:
         print(f"Reached maximum recursion depth of {max_depth}, stopping.")
@@ -249,8 +257,9 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
     # Create Download Folder
     os.makedirs(output_dir, exist_ok=True)
 
-    # Session
-    session = requests.Session()
+    # Proxy
+    proxies = dict(http='socks5://127.0.0.1:9150',
+                   https='socks5://127.0.0.1:9150')
 
     # Header
     headers = {
@@ -265,9 +274,11 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
         'Upgrade-Insecure-Requests': '1'
     }
 
-    # Proxy
-    proxies = dict(http='socks5://127.0.0.1:9050',
-                   https='socks5://127.0.0.1:9050')
+    # Session
+    session = requests.Session()
+    session.proxies = proxies
+    session.verify = verify_tls
+    session.headers.update(headers)
 
     tld_res = get_tld(url, as_object=True)
     domain = ".".join([tld_res.domain, tld_res.tld])
@@ -282,7 +293,7 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
         url_whitelist = [domain]
         print(f"  new Whitelist {url_whitelist}")
 
-    if cookies:
+    if cookies and isinstance(cookies, dict):
         session.cookies.update(cookies)
 
     #sys.setrecursionlimit(1500)
