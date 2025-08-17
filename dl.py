@@ -205,7 +205,15 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
             header, encoded = media_url.split(',', 1)
             f.write(base64.b64decode(encoded))
         else:
-            f.write(requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls).content)
+            try:
+                media_response = requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls, stream=True)
+                if media_response.status_code == 200:
+                    for chunk in media_response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                else:
+                    print(f"    Failed to download {media_url}, status code: {media_response.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"    Error downloading {media_url}: {e}")
 
 def download_images(soup, url, output_dir, headers, proxies, verify_tls):
     # Find all image tags
