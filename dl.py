@@ -208,7 +208,7 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
                 f.write(data)
         else:
             # Handle standard URL downloads
-            media_response = requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls, stream=True)
+            media_response = requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls, stream=True, timeout=42)
             media_response.raise_for_status()  # Raise an exception for bad status codes
             with open(file_path, 'wb') as f:
                 for chunk in media_response.iter_content(chunk_size=8192):
