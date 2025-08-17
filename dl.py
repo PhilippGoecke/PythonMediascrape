@@ -215,8 +215,8 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
                     f.write(chunk)
     except Exception as e:
         print(f"    Error downloading {media_url}: {e}")
-        # If the file was created, remove it on failure
-        if os.path.exists(file_path):
+        # If the file was created, remove it on failure if empty
+        if os.path.exists(file_path) and os.path.getsize(file_path) == 0:
             os.remove(file_path)
 
 # extra_match=('thumb', 'large')
