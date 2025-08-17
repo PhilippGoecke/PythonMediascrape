@@ -258,8 +258,8 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
     os.makedirs(output_dir, exist_ok=True)
 
     # Proxy
-    proxies = dict(http='socks5://127.0.0.1:9150',
-                   https='socks5://127.0.0.1:9150')
+    proxies = dict(http='socks5://127.0.0.1:9050',
+                   https='socks5://127.0.0.1:9050')
 
     # Header
     headers = {
