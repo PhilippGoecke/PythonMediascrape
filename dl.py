@@ -16,7 +16,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless=True):
+def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless=True, extra_match):
     if current_depth >= max_depth:
         print(f"Reached maximum recursion depth of {max_depth}, stopping.")
         return
@@ -123,7 +123,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
         print("  Skipping BeautifulSoup parsing: content is not HTML.")
         return
 
-    download_images(soup, url, output_dir, headers, proxies, verify_tls)
+    download_images(soup, url, output_dir, headers, proxies, verify_tls, extra_match)
 
     download_videos(soup, url, output_dir, headers, proxies, verify_tls)
 
@@ -165,7 +165,7 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
                     # Check if any keyword is in the resolved URL
                     if any(keyword in resolved_url for keyword in url_whitelist):
                         print(f"  Found link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
-                        recursiv_download(session, resolved_url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth + 1, max_depth, cookies, headless)
+                        recursiv_download(session, resolved_url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth + 1, max_depth, cookies, headless, extra_match)
                     else:
                         print(f"    Skipping non-whitelist link: {resolved_url} (Depth: {current_depth + 1}/{max_depth})")
                         continue
@@ -215,7 +215,8 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
             except requests.exceptions.RequestException as e:
                 print(f"    Error downloading {media_url}: {e}")
 
-def download_images(soup, url, output_dir, headers, proxies, verify_tls):
+# extra_match=('thumb', 'large')
+def download_images(soup, url, output_dir, headers, proxies, verify_tls, extra_match=None):
     # Find all image tags
     for img in soup.find_all('img'):
         img_src = img.get('src')
@@ -223,6 +224,11 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls):
             continue
         img_url = urljoin(url, img_src)
         download_media_file(img_url, output_dir, 'img', headers, proxies, verify_tls)
+        if extra_match:
+            if img_url[-7:].find(extra_match[0]) > 0:
+                extra_img_url = img_url[::-1].replace(extra_match[0], extra_match[1], 1)[::-1]
+                print(f"    Found extra match, downloading: {extra_img_url}")
+                download_media_file(extra_img_url, output_dir, 'img', headers, proxies, verify_tls)
 
 def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
     # Find all video and source tags
@@ -235,7 +241,7 @@ def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
         video_url = urljoin(url, video_src)
         download_media_file(video_url, output_dir, 'vid', headers, proxies, verify_tls)
 
-def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None, headless=True):
+def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=True, max_depth=2, current_depth=0, cookies=None, headless=True, extra_match=None):
     # Create Download Folder
     os.makedirs(output_dir, exist_ok=True)
 
@@ -277,7 +283,7 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
 
     #sys.setrecursionlimit(1500)
 
-    recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless)
+    recursiv_download(session, url, headers, proxies, output_dir, url_whitelist, verify_tls, current_depth, max_depth, cookies, headless, extra_match)
 
     print(f"Scraped {len(scraped_urls)} Pages")
 
@@ -285,4 +291,4 @@ def download_media(url, output_dir='downloads', url_whitelist=None, verify_tls=T
 #    target_url = input("Enter the URL to scrape: ")
 #    url_whitelist_input = input("Enter URL whitelist to filter by (comma-separated, optional): ")
 #    url_whitelist = [item.strip() for item in url_whitelist_input.split(',')] if url_whitelist_input else None
-#    download_media(target_url, url_whitelist=url_whitelist, verify_tls=True, max_depth=2)
+#    download_media(target_url, url_whitelist=url_whitelist, verify_tls=True, max_depth=2, headless, extra_match)
