@@ -214,7 +214,7 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
                 for chunk in media_response.iter_content(chunk_size=8192):
                     f.write(chunk)
     except Exception as e:
-        print(f"    Error downloading {media_url}: {e}")
+        print(f"      Error downloading {media_url}: {e}")
         # If the file was created, remove it on failure if empty
         if os.path.exists(file_path) and os.path.getsize(file_path) == 0:
             os.remove(file_path)
@@ -231,7 +231,7 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls, extra_m
         if extra_match:
             if img_url[-7:].find(extra_match[0]) > 0:
                 extra_img_url = img_url[::-1].replace(extra_match[0][::-1], extra_match[1], 1)[::-1]
-                print(f"    Found extra match, downloading: {extra_img_url}")
+                print(f"      Found extra match, downloading: {extra_img_url}")
                 download_media_file(extra_img_url, output_dir, 'img', headers, proxies, verify_tls)
 
 def download_videos(soup, url, output_dir, headers, proxies, verify_tls):
