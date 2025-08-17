@@ -230,7 +230,7 @@ def download_images(soup, url, output_dir, headers, proxies, verify_tls, extra_m
         download_media_file(img_url, output_dir, 'img', headers, proxies, verify_tls)
         if extra_match:
             if img_url[-7:].find(extra_match[0]) > 0:
-                extra_img_url = img_url[::-1].replace(extra_match[0], extra_match[1], 1)[::-1]
+                extra_img_url = img_url[::-1].replace(extra_match[0][::-1], extra_match[1], 1)[::-1]
                 print(f"    Found extra match, downloading: {extra_img_url}")
                 download_media_file(extra_img_url, output_dir, 'img', headers, proxies, verify_tls)
 
