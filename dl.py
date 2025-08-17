@@ -82,9 +82,29 @@ def recursiv_download(session, url, headers, proxies, output_dir, url_whitelist,
         if 'application/pdf' in content_type:
             ext = '.pdf'
         elif 'image/' in content_type:
+            subtype = content_type.split('/')[1].split(';')[0]
+            if subtype == 'svg+xml':
+                ext = '.svg'
+            else:
+                ext = '.' + subtype
+        elif 'video/' in content_type:
             ext = '.' + content_type.split('/')[1].split(';')[0]
+        elif 'audio/' in content_type:
+            ext = '.' + content_type.split('/')[1].split(';')[0]
+        elif 'font/' in content_type:
+            ext = '.' + content_type.split('/')[1]
         elif 'application/json' in content_type:
             ext = '.json'
+        elif 'application/javascript' in content_type or 'text/javascript' in content_type:
+            ext = '.js'
+        elif 'text/css' in content_type:
+            ext = '.css'
+        elif 'text/xml' in content_type or 'application/xml' in content_type:
+            ext = '.xml'
+        elif 'application/zip' in content_type:
+            ext = '.zip'
+        elif 'application/x-font-woff' in content_type:
+            ext = '.woff'
         else:
             ext = '.bin'
         non_html_path = os.path.join(output_dir, f'file_{url_hash}{ext}')
