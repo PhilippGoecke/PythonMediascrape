@@ -199,21 +199,25 @@ def download_media_file(media_url, output_dir, prefix, headers, proxies, verify_
     print(f"    Downloading {prefix}: {media_url} -> {filename}")
 
     # Download the media file
-    with open(file_path, 'wb') as f:
+    try:
         if media_url.startswith('data:'):
             # Handle base64 encoded data
             header, encoded = media_url.split(',', 1)
-            f.write(base64.b64decode(encoded))
+            data = base64.b64decode(encoded)
+            with open(file_path, 'wb') as f:
+                f.write(data)
         else:
-            try:
-                media_response = requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls, stream=True)
-                if media_response.status_code == 200:
-                    for chunk in media_response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                else:
-                    print(f"    Failed to download {media_url}, status code: {media_response.status_code}")
-            except requests.exceptions.RequestException as e:
-                print(f"    Error downloading {media_url}: {e}")
+            # Handle standard URL downloads
+            media_response = requests.get(media_url, headers=headers, proxies=proxies, verify=verify_tls, stream=True)
+            media_response.raise_for_status()  # Raise an exception for bad status codes
+            with open(file_path, 'wb') as f:
+                for chunk in media_response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+    except Exception as e:
+        print(f"    Error downloading {media_url}: {e}")
+        # If the file was created, remove it on failure
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 # extra_match=('thumb', 'large')
 def download_images(soup, url, output_dir, headers, proxies, verify_tls, extra_match=None):
